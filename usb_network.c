@@ -44,14 +44,17 @@
 uint8_t tud_network_mac_address[6]; // MAC will be generated in usb_network_init()
 
 // lwip network interface for usb
-static struct netif netif_usb;
+struct netif netif_usb;
+
+// flag whether netif_usb interface has been added
+static bool netif_added = false;
 
 // shared between tud_network_recv_cb() and service_traffic()
 static struct pbuf *received_frame;
 
-// netif support functions:
+// network interface functions:
 
-static err_t linkoutput_fn(__unused struct netif *netif, struct pbuf *p) {
+static err_t tud_output(__unused struct netif *netif, struct pbuf *p) {
   for (;;) {
     // if TinyUSB isn't ready, signal back to lwip that there is nothing to do
     if (!tud_ready()) {
@@ -60,24 +63,15 @@ static err_t linkoutput_fn(__unused struct netif *netif, struct pbuf *p) {
 
     // check if the network driver can accept another packet
     if (tud_network_can_xmit(p->tot_len)) {
-      tud_network_xmit(p, 0 /* unused for this example */);
+      tud_network_xmit(p, 0);
       return ERR_OK;
     }
 
+    // can't send new packet yet
     // transfer execution to TinyUSB to hopefully finish transmitting the prior packet
     tud_task();
   }
 }
-
-static err_t ip4_output_fn(struct netif *netif, struct pbuf *p, const ip4_addr_t *addr) {
-  return etharp_output(netif, p, addr);
-}
-
-#if LWIP_IPV6
-static err_t ip6_output_fn(struct netif *netif, struct pbuf *p, const ip6_addr_t *addr) {
-  return ethip6_output(netif, p, addr);
-}
-#endif
 
 static err_t netif_init_cb(struct netif *netif) {
   LWIP_ASSERT("netif != NULL", (netif != NULL));
@@ -86,15 +80,25 @@ static err_t netif_init_cb(struct netif *netif) {
   netif->state = NULL;
   netif->name[0] = 'E';
   netif->name[1] = 'X';
-  netif->linkoutput = linkoutput_fn;
-  netif->output = ip4_output_fn;
+  netif->linkoutput = tud_output;
+#if LWIP_IPV4
+  netif->output = etharp_output;
+#endif
 #if LWIP_IPV6
-  netif->output_ip6 = ip6_output_fn;
+  netif->output_ip6 = ethip6_output;
 #endif
   return ERR_OK;
 }
 
-// other network device driver support functions:
+// driver callbacks:
+
+void tud_network_init_cb() {
+  // if the network is re-initialising and there is a leftover packet, perform a cleanup
+  if (received_frame) {
+    pbuf_free(received_frame);
+    received_frame = NULL;
+  }
+}
 
 bool tud_network_recv_cb(const uint8_t *src, uint16_t size) {
   // this shouldn't happen, but if receive another packet before
@@ -126,18 +130,12 @@ uint16_t tud_network_xmit_cb(uint8_t *dst, void *ref, uint16_t arg) {
   return pbuf_copy_partial(p, dst, p->tot_len, 0);
 }
 
-void tud_network_init_cb() {
-  // if the network is re-initialising and there is a leftover packet, perform a cleanup
-  if (received_frame) {
-    pbuf_free(received_frame);
-    received_frame = NULL;
-  }
-}
+// usb network api:
 
 static inline void service_traffic() {
   // handle any packet received by tud_network_recv_cb()
   if (received_frame) {
-    if (ethernet_input(received_frame, &netif_usb) != ERR_OK) {
+    if (netif_usb.input(received_frame, &netif_usb) != ERR_OK) {
       pbuf_free(received_frame); // only free on error
     }
     received_frame = NULL;
@@ -182,14 +180,27 @@ bool usb_network_init(const ip4_addr_t *ownip, const ip4_addr_t *netmask, const 
   macString[c] = 0;
   printf("%s\n", macString);
 
-  if (netif_add(&netif_usb, ownip, netmask, gateway, NULL, netif_init_cb, ip_input) == NULL) {
+#if NO_SYS
+  netif_input_fn input_func = ethernet_input;
+#else
+  netif_input_fn input_func = tcpip_input;
+#endif
+
+#if LWIP_IPV4
+  if (netif_add(&netif_usb, ownip, netmask, gateway, NULL, netif_init_cb, input_func) == NULL) {
     printf("usb_network: error adding netif\n");
     return false;
   }
+#endif
 #if LWIP_IPV6
-  netif_create_ip6_linklocal_address(netif_usb, 1);
+  if (netif_add(&netif_usb, NULL, netif_init_cb, input_func) == NULL) {
+    printf("usb_network: error adding netif\n");
+    return false;
+  }
+  netif_create_ip6_linklocal_address(&netif_usb, 1);
 #endif
   netif_set_default(&netif_usb);
+  netif_added = true;
 
   // wait for netif to be up
   while (!netif_is_up(&netif_usb)) {
@@ -200,5 +211,10 @@ bool usb_network_init(const ip4_addr_t *ownip, const ip4_addr_t *netmask, const 
 }
 
 void usb_network_deinit() {
+  if (netif_added) {
+    netif_remove(&netif_usb);
+    netif_added = false;
+  }
+  netif_usb.flags = 0;
   tud_deinit(PICO_TUD_RHPORT);
 }
