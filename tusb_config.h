@@ -78,7 +78,6 @@ extern "C" {
 
 // set ECM (RNDIS) or NCM
 #define USE_ECM 0
-// #define INCLUDE_IPERF
 
 //--------------------------------------------------------------------
 // NCM CLASS CONFIGURATION, SEE "ncm.h" FOR PERFORMANCE TUNING
