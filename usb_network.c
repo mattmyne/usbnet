@@ -150,13 +150,15 @@ void usb_network_update() {
   service_traffic();
 }
 
-bool usb_network_init(const ip4_addr_t *ownip, const ip4_addr_t *netmask, const ip4_addr_t *gateway) {
+bool usb_network_init(const ip4_addr_t *ownip, const ip4_addr_t *netmask, const ip4_addr_t *gateway, bool init_lwip) {
   if (!tud_init(PICO_TUD_RHPORT)) {
     printf("usb_network: tud_init fail\n");
     return false;
   }
 
-  lwip_init();
+  if (init_lwip) {
+    lwip_init(); // only initialise lwIP if not already done so e.g. by cyw43_arch_init()
+  }
 
   // generate new tud_network_mac_address from pico board_id, as in cyw43_hal_generate_laa_mac()
   pico_unique_board_id_t board_id;

@@ -15,7 +15,7 @@ int main() {
   stdio_uart_init();
 
   // setup USB network
-  if (!usb_network_init(&ownip, &netmask, &gateway)) {
+  if (!usb_network_init(&ownip, &netmask, &gateway, true)) {
     printf("failed to start usb network\n");
     return -1;
   }
