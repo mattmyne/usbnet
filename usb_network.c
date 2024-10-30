@@ -150,6 +150,10 @@ void usb_network_update() {
   service_traffic();
 }
 
+bool usb_network_is_up() {
+  return tud_ready();
+}
+
 bool usb_network_init(const ip4_addr_t *ownip, const ip4_addr_t *netmask, const ip4_addr_t *gateway, bool init_lwip) {
   if (!tud_init(PICO_TUD_RHPORT)) {
     printf("usb_network: tud_init fail\n");

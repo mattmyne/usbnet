@@ -36,6 +36,7 @@ extern "C" {
 #include <stdbool.h>
 
 bool usb_network_init(const ip4_addr_t *ownip, const ip4_addr_t *netmask, const ip4_addr_t *gateway, bool init_lwip);
+bool usb_network_is_up();
 void usb_network_update();
 void usb_network_deinit();
 
