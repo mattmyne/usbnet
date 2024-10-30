@@ -44,7 +44,8 @@
 uint8_t tud_network_mac_address[6]; // MAC will be generated in usb_network_init()
 
 // lwip network interface for usb
-struct netif netif_usb;
+// can be accessed externally through netif_default
+static struct netif netif_usb;
 
 // flag whether netif_usb interface has been added
 static bool netif_added = false;
@@ -76,7 +77,7 @@ static err_t tud_output(__unused struct netif *netif, struct pbuf *p) {
 static err_t netif_init_cb(struct netif *netif) {
   LWIP_ASSERT("netif != NULL", (netif != NULL));
   netif->mtu = CFG_TUD_NET_MTU;
-  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP | NETIF_FLAG_UP;
+  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET | NETIF_FLAG_IGMP | NETIF_FLAG_LINK_UP | NETIF_FLAG_UP;
   netif->state = NULL;
   netif->name[0] = 'E';
   netif->name[1] = 'X';
@@ -86,6 +87,12 @@ static err_t netif_init_cb(struct netif *netif) {
 #endif
 #if LWIP_IPV6
   netif->output_ip6 = ethip6_output;
+#endif
+#if LWIP_IGMP
+  // netif_igmp_mac_filter() is not implemented
+  // no mac filter options on tinyusb network driver(s), perhaps not needed if promiscuous (given connection type)?
+
+  // netif_set_igmp_mac_filter(netif, netif_igmp_mac_filter);
 #endif
   return ERR_OK;
 }
