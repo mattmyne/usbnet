@@ -1,4 +1,5 @@
 #include <hardware/uart.h>
+#include <lwip/apps/mdns.h>
 #include <lwip/ip.h>
 #include <pico/stdlib.h>
 #include <stdio.h>
@@ -24,6 +25,10 @@ int main() {
   dhcp_server_t dhcp_server;
   dhcp_server_init(&dhcp_server, (ip_addr_t *)&ownip, (ip_addr_t *)&netmask, false);
 
+  // enable mDNS
+  mdns_resp_init();
+  mdns_resp_add_netif(netif_default, "demo");
+
   // enter main loop
   printf("setup complete, entering main loop\n");
   int key = 0;
@@ -33,6 +38,7 @@ int main() {
   }
 
   printf("shutting down\n");
+  mdns_resp_remove_netif(netif_default);
   dhcp_server_deinit(&dhcp_server);
   usb_network_deinit();
 

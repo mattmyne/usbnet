@@ -56,6 +56,7 @@ target_link_libraries(usbnet
     tinyusb_device
     pico_lwip
     pico_lwip_nosys
+    pico_lwip_mdns
     pico_unique_id
 )
 
