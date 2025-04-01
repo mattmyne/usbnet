@@ -5,6 +5,8 @@ By default uses CDC-NCM, but can use ECM/RNDIS by changing the `USE_ECM` define 
 
 The Pico assigns itself an IP of `192.168.7.1` and a DHCP server is started that assigns the host computer `192.168.7.16`. You should be able to ping the Pico from the computer to confirm the connection.
 
+I've also added mDNS, allowing the Pico to also be reached at `demo.local`
+
 I've used the DHCP server code from the Pico examples rather than the TinyUSB one, but feel free to switch it out as needed.
 
 No additional libraries other than those included in the Pico SDK are needed. Only the built-in TinyUSB and lwIP are used.
@@ -14,8 +16,6 @@ I've only run it on a Pico W (RP2040) so far (though works when compiled as a Pi
 
 For Pico W, if you need to use CYW43-specific functionality, after adding `cyw43_arch_init()` call `usb_network_init(...)` with the last parameter (init_lwip) as `false` to avoid re-initialising lwIP again.
 If you use the e.g. `pico_cyw43_arch_lwip_poll` library in CMakeLists.txt then you can remove the pico_lwip* libraries in this example (as they'll be linked anyway).
-
-mDNS should work too if you want to use e.g. usbnet.local for the Pico rather than 192.168.7.1.
 
 If you access stdio over the default UART connection, sending the 's' character will demonstrate a clean shutdown.
 
