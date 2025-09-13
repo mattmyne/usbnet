@@ -11,13 +11,13 @@ I've used the DHCP server code from the Pico examples rather than the TinyUSB on
 
 No additional libraries other than those included in the Pico SDK are needed. Only the built-in TinyUSB and lwIP are used.
 
-I have tested this on Windows 11 and iOS (CDC-NCM only), and I am aware of it working at least in Linux. I would hope it will work for MacOS and potentially Android too.
-I've only run it on a Pico W (RP2040) so far (though works when compiled as a Pico). I've not tested it on a Pico 2 / RP2350 yet, but since only the SDK is used it should be ok?
+I have tested this on Windows 11 and iOS (CDC-NCM only), and I am aware of it working at least in Linux. I expect it will work for MacOS and Android too (feedback welcome!).
+I've only run it on a Pico W (RP2040) so far (though works when compiled as a Pico). I've not tested it on a Pico 2 / RP2350 yet, but since only the SDK is used it should be ok.
 
 For Pico W, if you need to use CYW43-specific functionality, after adding `cyw43_arch_init()` call `usb_network_init(...)` with the last parameter (init_lwip) as `false` to avoid re-initialising lwIP again.
 If you use the e.g. `pico_cyw43_arch_lwip_poll` library in CMakeLists.txt then you can remove the pico_lwip* libraries in this example (as they'll be linked anyway).
 
-If you access stdio over the default UART connection, sending the 's' character will demonstrate a clean shutdown.
+If you connect to stdio over UART, sending the 's' character will demonstrate a clean shutdown.
 
 This is only meant as a starting point for your own projects!
 
@@ -25,4 +25,4 @@ The code was mostly based on the latest version of the TinyUSB webserver example
 https://github.com/hathach/tinyusb/tree/master/examples/device/net_lwip_webserver
 with the hathach/tinyusb#2829 PR included (thanks for that!)
 
-- I've removed the actual web server (`httpd_init()` call) for simplicity, but this and anything else that can run under lwIP should work the same though the USB interface.
+- I've removed the actual web server (`httpd_init()` call) for simplicity, but this and anything else that can run under lwIP should work the same through the USB interface.
