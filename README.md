@@ -1,5 +1,11 @@
 # USBNet
 
+**Issue with current TinyUSB library used by the Pico SDK:**\
+Since Windows 11 update KB5124008 (September 2026), TinyUSB's NCM class driver causes a code 10 failure when connecting the Pico. This has been fixed in TinyUSB [PR #3914](https://github.com/hathach/tinyusb/pull/3914) :tada: but the merge is not yet released for TinyUSB or Pico SDK.\
+Since this is outside of this repo, you'll need to edit your own copy of ncm_device.c at `[your user folder]\.pico-sdk\sdk\2.3.1\lib\tinyusb\src\class\net\ncm_device.c` and make the two minor value changes in the PR. You'll need to do this each time you update or re-download the Pico SDK until it includes the fixed TinyUSB version.
+
+Original README continues:
+
 ## Demonstrates a USB ethernet network on the Raspberry Pi Pico (or Pico W)
 By default uses CDC-NCM, but can use ECM/RNDIS by changing the `USE_ECM` define from `0` to `1` in `tusb_config.h`
 

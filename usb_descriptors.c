@@ -70,7 +70,9 @@ enum {
 tusb_desc_device_t const desc_device = {
   .bLength = sizeof(tusb_desc_device_t),
   .bDescriptorType = TUSB_DESC_DEVICE,
-  .bcdUSB = 0x0110, // USB 1.1
+  // specificy USB 2.1 even with 1.1 hardware:
+  // Windows only requests the BOS descriptor (needed to bind the built-in NCM driver) when bcdUSB >= 0x0201 (but 0x0210 is standard)
+  .bcdUSB = 0x0210,
   // Use Interface Association Descriptor (IAD) device class
   .bDeviceClass = TUSB_CLASS_MISC,
   .bDeviceSubClass = MISC_SUBCLASS_COMMON,
@@ -209,8 +211,7 @@ https://developers.google.com/web/fundamentals/native-hardware/build-for-webusb/
 #define MS_OS_20_DESC_LEN 0xB2
 
 // BOS Descriptor is required for webUSB
-uint8_t const desc_bos[] = {
-  // total length, number of device caps
+uint8_t const desc_bos[] = {// total length, number of device caps
   TUD_BOS_DESCRIPTOR(BOS_TOTAL_LEN, 1),
 
   // Microsoft OS 2.0 descriptor
@@ -220,8 +221,7 @@ uint8_t const *tud_descriptor_bos_cb(void) {
   return desc_bos;
 }
 
-uint8_t const desc_ms_os_20[] = {
-  // Set header: length, type, windows version, total length
+uint8_t const desc_ms_os_20[] = {// Set header: length, type, windows version, total length
   U16_TO_U8S_LE(0x000A), U16_TO_U8S_LE(MS_OS_20_SET_HEADER_DESCRIPTOR), U32_TO_U8S_LE(0x06030000), U16_TO_U8S_LE(MS_OS_20_DESC_LEN),
 
   // Configuration subset header: length, type, configuration index, reserved, configuration total length
